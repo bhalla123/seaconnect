@@ -1,40 +1,163 @@
 var mongoose = require('mongoose');
-var User = mongoose.model('User');
+var User = require("../models/user");
 const JWT = require('jsonwebtoken');
 const helperFxn = require('../helpers/hashPasswords');
+const responseHelper = require('../helpers/responseHelper');
+let bcrypt = require("bcryptjs");
 
 signtoken = user => {
   return JWT.sign({
-    id: user.dataValues.id,
-    role_name: user.dataValues.type,
-  }, process.env.JWT_SECRET);
+    id: user._id
+  }, "ASDCSFASD");
 }
 
-exports.signUp = async function(req, res) {
-  try {
-        const newUser = new User({
-            first_name : req.body.firstName,
-            user_name : req.body.lastName,
-            password : req.body.password,
-            gender : req.body.gender,
-            dob : req.body.dob,
-            interest_in : req.body.interest_in,
-            mobile_number : req.body.mobile_number,
-            age_range:req.body.age_range,
-            email: req.body.email,
-            looking_for:req.body.looking_for
-        });
 
-        let newPassword = await helperFxn.generatePass(req.body.password);
+module.exports = {
+
+    signUp : async function(req, res) {
+      try {
+
+            let hash = bcrypt.hashSync(req.body.password, 10);
+
+            const newUser = new User({
+                first_name : req.body.first_name,
+                password:hash,
+                user_name : req.body.user_name,
+                gender : req.body.gender,
+                dob : req.body.dob,
+                interest_in : req.body.interest_in,
+                mobile_number : req.body.mobile_number,
+                age_range:req.body.age_range,
+                email: req.body.email,
+                looking_for:req.body.looking_for
+            });
+
+            // Match email
+            const emailCheck = await User.findOne({
+                email: req.body.email,
+            });
+
+            if(emailCheck){
+              return responseHelper.onError(res, {}, 'Email already exist');
+            }
+
+            if(req.file){
+              newUser.profile_image = req.file.filename
+            }
+
+            let newPassword = await helperFxn.generatePass(req.body.password);
+        
+            var user = await User.create(newUser);
+
+            if(user){
+                const access_token = await signtoken(user)
+                var getUser = await User.findOne({
+                    _id: user._id
+                }, { access_token: access_token}).select(['first_name', 'profile_image','user_name', 'email', 'dob', 'mobile_number'])
+
+                delete getUser.password;
+
+                return responseHelper.post(res, getUser, 'User Registered');
+            }else{
+                return responseHelper.onError(res, err, 'Error while registering user');
+            }
+            
+        } catch(err) {
+            return responseHelper.onError(res, err, 'Error while registering user');
+        }
+    },
     
-        await User.register(newUser, req.body.password);
-        await passport.authenticate("local")(req, res, () => {
-          res.redirect("/user/1")
-        }); 
-    } catch(err) {
-      return res.render("user/userSignup");
+    // login
+    login: async (req, res) => {
+        try {
+          const data = req.body;
+          // Match email
+          const user = await User.findOne({
+              email: data.email,
+          });
+
+
+          if (user) {
+            // Match password
+            const isMatch = await bcrypt.compareSync(data.password, user.password);
+            if (!isMatch) {
+              return responseHelper.Error(res, {}, 'Invalid login details')
+            }
+            
+            const access_token = signtoken(user._id)
+            var getUser = await User.findOne({
+                    _id: user._id
+                }, { access_token: access_token}).select(['first_name', 'profile_image', 'user_name', 'email', 'dob', 'mobile_number'])
+
+                delete getUser.password;
+            return responseHelper.post(res, getUser, 'User Successfully logged in');
+          } else {
+            return responseHelper.Error(res, {}, 'Invalid login details')
+          }
+
+        } catch (err) {
+          return responseHelper.onError(res, err, 'Error while logging In');
+        }
+      },
+
+    getProfileDetail :async function(req, res) {
+      try{
+
+            var user = await User.findOne({ _id: req.params.id });
+
+            if(user){
+              return responseHelper.post(res, user, 'Profile detail fetched Successfully');
+            }else{
+              return responseHelper.onError(res, {}, 'User does not exist');
+            }
+      }catch(err) {
+        return responseHelper.onError(res, err, 'Error while registering user');
+      }
+    },
+
+    updateProfile: async(req, res) => {
+      try{
+          var data = req.body;
+          /*var user = await User.findOne({ _id: data.id })
+          if(user){
+            return responseHelper.post(res, user, 'Profile detail fetched Successfully');
+          }else{
+            return responseHelper.onError(res, {}, 'User does not exist');
+          }*/
+
+
+          var newUser = {
+                first_name : req.body.first_name,
+                user_name : req.body.user_name,
+                gender : req.body.gender,
+                dob : req.body.dob,
+                interest_in : req.body.interest_in,
+                mobile_number : req.body.mobile_number,
+                age_range:req.body.age_range,
+                email: req.body.email,
+                looking_for:req.body.looking_for
+            };
+  
+            if(data.password){
+              newUser.password = bcrypt.hashSync(data.password, 10);
+            }
+
+          var user = await User.findOneAndUpdate(
+                    {_id: data.id }
+                    ,newUser,
+                    {
+                          new: true
+                        }
+                ).lean();
+
+          return responseHelper.post(res, user, 'Profile updated successfully');
+      }catch(err){
+        return responseHelper.onError(res, err, 'Error while updating profile');
+      }
     }
+
 }
+
 
 
 

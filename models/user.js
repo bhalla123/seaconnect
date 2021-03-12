@@ -45,8 +45,8 @@ var UserSchema = new Schema({
     profile_image:{
         type: String,
         deafult: null
-    }
-},{ versionKey: false });
+    },
+},{ versionKey: false, strict:false });
 
 
 module.exports = mongoose.model('User', UserSchema);
