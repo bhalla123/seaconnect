@@ -46,7 +46,19 @@ var UserSchema = new Schema({
         type: String,
         deafult: null
     },
-},{ versionKey: false, strict:false });
+},
+{
+    toObject: {
+        virtuals: true
+    },
+    toJSON: {
+        virtuals: true
+    },
+});
 
+
+UserSchema.virtual('profile_image_link').get(function() {
+    return "http://localhost:3000/profile/"+this.profile_image;
+});
 
 module.exports = mongoose.model('User', UserSchema);

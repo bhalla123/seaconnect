@@ -4,6 +4,9 @@ const JWT = require('jsonwebtoken');
 const helperFxn = require('../helpers/hashPasswords');
 const responseHelper = require('../helpers/responseHelper');
 let bcrypt = require("bcryptjs");
+const uid = require('uid');
+const fs = require('fs');
+
 
 signtoken = user => {
   return JWT.sign({
@@ -103,7 +106,7 @@ module.exports = {
     getProfileDetail :async function(req, res) {
       try{
 
-            var user = await User.findOne({ _id: req.params.id });
+            var user = await User.findById({ _id: req.params.id });
 
             if(user){
               return responseHelper.post(res, user, 'Profile detail fetched Successfully');
@@ -111,27 +114,20 @@ module.exports = {
               return responseHelper.onError(res, {}, 'User does not exist');
             }
       }catch(err) {
-        return responseHelper.onError(res, err, 'Error while registering user');
+        return responseHelper.onError(res, err, 'Error while getting profile');
       }
     },
 
     updateProfile: async(req, res) => {
       try{
           var data = req.body;
-          /*var user = await User.findOne({ _id: data.id })
-          if(user){
-            return responseHelper.post(res, user, 'Profile detail fetched Successfully');
-          }else{
-            return responseHelper.onError(res, {}, 'User does not exist');
-          }*/
-
-
+          
           var newUser = {
                 first_name : req.body.first_name,
                 user_name : req.body.user_name,
                 gender : req.body.gender,
                 dob : req.body.dob,
-                interest_in : req.body.interest_in,
+                interested_in : req.body.interested_in,
                 mobile_number : req.body.mobile_number,
                 age_range:req.body.age_range,
                 email: req.body.email,
@@ -145,17 +141,62 @@ module.exports = {
           var user = await User.findOneAndUpdate(
                     {_id: data.id }
                     ,newUser,
-                    {
-                          new: true
-                        }
+                    { new: true}
                 ).lean();
 
           return responseHelper.post(res, user, 'Profile updated successfully');
       }catch(err){
         return responseHelper.onError(res, err, 'Error while updating profile');
       }
-    }
+    },
 
+    updateProfileImage: async(req, res) => {
+      try{
+
+         var user = await User.findOne({ _id: req.body.id });
+
+        let imageUrl;
+
+        if(req.file) {
+            imageUrl = req.file.filename;
+
+            var filename = imageUrl;
+            let previousImagePath = "/var/www/html/seaconnect/public/profile/" +user.profile_image;
+
+            const imageExist = fs.existsSync(previousImagePath);
+
+            if(imageExist) {
+                fs.unlink(previousImagePath, (err) => {
+                  if (err) {
+                     console.log("Failed to delete image at delete profile");
+                     return next(err);
+                  }
+              });
+            }
+            
+        } 
+
+        var user = await User.findOneAndUpdate(
+                    {_id: user._id }
+                    ,{profile_image: filename},
+                    { new: true}
+                ).lean();
+
+        return responseHelper.post(res, user, 'Profile updated successfully');
+      }catch(err){
+          return responseHelper.onError(res, err, 'Error while registering user');
+      }
+    },
+
+
+    deleteImage: async(imagePath, next) => {
+      fs.unlink(imagePath, (err) => {
+        if (err) {
+           console.log("Failed to delete image at delete profile");
+           return next(err);
+        }
+    });
+  }
 }
 
 

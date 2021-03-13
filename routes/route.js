@@ -37,7 +37,11 @@ router.route('/api/profile/detail/:id')
 
 //update profile
 router.route('/api/update/profile')
-	.post(userController.updateProfile);
+	.post(validateBody(schemas.updateProfileSchema), userController.updateProfile);
+
+//update profile image
+router.route('/api/update/profile/image')
+	.post(vaultUploads.single('profile_image'), userController.updateProfileImage);
 
 
 module.exports = router;
