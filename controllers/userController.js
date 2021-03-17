@@ -1,5 +1,6 @@
 var mongoose = require('mongoose');
 var User = require("../models/user");
+var UserImages = require("../models/userImages");
 const JWT = require('jsonwebtoken');
 const helperFxn = require('../helpers/hashPasswords');
 const responseHelper = require('../helpers/responseHelper');
@@ -28,11 +29,12 @@ module.exports = {
                 user_name : req.body.user_name,
                 gender : req.body.gender,
                 dob : req.body.dob,
-                interest_in : req.body.interest_in,
+                interested_in : req.body.interested_in,
                 mobile_number : req.body.mobile_number,
                 age_range:req.body.age_range,
                 email: req.body.email,
-                looking_for:req.body.looking_for
+                looking_for:req.body.looking_for,
+                bio:req.body.bio
             });
 
             // Match email
@@ -42,6 +44,14 @@ module.exports = {
 
             if(emailCheck){
               return responseHelper.onError(res, {}, 'Email already exist');
+            }
+
+            const usernameCheck = await User.findOne({
+                user_name: req.body.user_name,
+            });
+
+            if(usernameCheck){
+              return responseHelper.onError(res, {}, 'Username already exist');
             }
 
             if(req.file){
@@ -76,7 +86,7 @@ module.exports = {
           const data = req.body;
           // Match email
           const user = await User.findOne({
-              email: data.email,
+              user_name: data.user_name,
           });
 
 
@@ -90,7 +100,7 @@ module.exports = {
             const access_token = signtoken(user._id)
             var getUser = await User.findOne({
                     _id: user._id
-                }, { access_token: access_token}).select(['first_name', 'profile_image', 'user_name', 'email', 'dob', 'mobile_number'])
+                }, { access_token: access_token}).select({ "first_name": 1, "_id": 1, profile_image:1 , "user_name":1, "email":1})
 
                 delete getUser.password;
             return responseHelper.post(res, getUser, 'User Successfully logged in');
@@ -133,6 +143,27 @@ module.exports = {
                 email: req.body.email,
                 looking_for:req.body.looking_for
             };
+
+            var UserId = data.id;
+
+            // Match email
+            const emailCheck = await User.findOne({
+                email: req.body.email,
+                _id: { $ne: UserId }
+            });
+
+            if(emailCheck){
+              return responseHelper.onError(res, {}, 'Email already exist');
+            }
+
+            const usernameCheck = await User.findOne({
+                user_name: req.body.user_name,
+                _id: { $ne: UserId }
+            });
+
+            if(usernameCheck){
+              return responseHelper.onError(res, {}, 'Username already exist');
+            }
   
             if(data.password){
               newUser.password = bcrypt.hashSync(data.password, 10);
@@ -184,7 +215,7 @@ module.exports = {
 
         return responseHelper.post(res, user, 'Profile updated successfully');
       }catch(err){
-          return responseHelper.onError(res, err, 'Error while registering user');
+          return responseHelper.onError(res, err, 'Error while updating image');
       }
     },
 
@@ -196,6 +227,23 @@ module.exports = {
            return next(err);
         }
     });
+  },
+
+  uploadUserImages: async(req, res) => {
+
+    var files = req.files;
+    
+    var data = [];
+
+     //insert new
+      var insert = await files.map(item => {
+                        data.push({"user_id":req.user.id,
+                        "image_path":item.filename })
+                        });
+
+      var resp = await UserImages.insertMany(data);
+
+    return responseHelper.get(res, resp,  'User images fetch successfully.');
   }
 }
 

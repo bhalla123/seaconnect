@@ -22,6 +22,8 @@ var vaultUploads = multer({storage : vaultFileStorage })// file data uploading p
 
 // importing controller
 const userController = require('../controllers/userController');
+const filterController = require('../controllers/filterUserController');
+const requestController = require('../controllers/requestController');
 
 //signIn
 router.route('/api/login')
@@ -33,7 +35,7 @@ router.route('/api/signup')
 
 //Get profile
 router.route('/api/profile/detail/:id')
-	.get(userController.getProfileDetail);
+	.get(passportJWT, userController.getProfileDetail);
 
 //update profile
 router.route('/api/update/profile')
@@ -42,6 +44,30 @@ router.route('/api/update/profile')
 //update profile image
 router.route('/api/update/profile/image')
 	.post(vaultUploads.single('profile_image'), userController.updateProfileImage);
+
+//filter user by interactions
+router.route('/api/filter/users')
+	.post(passportJWT, validateBody(schemas.filterInteractionSchema), filterController.filterUsers);
+
+//filter user by interactions
+router.route('/api/get/interaction/list')
+	.get(passportJWT, filterController.getInteractionList);
+
+//send conection request
+router.route('/api/send/connection/request')
+	.post(passportJWT, requestController.sendRequest);
+
+//update status
+router.route('/api/update/receievd/connection')
+	.post(passportJWT, validateBody(schemas.connectionStatusSchema), requestController.updateReceievdConnection);
+
+//get connection list
+router.route('/api/get/received/connection/list')
+	.get(passportJWT, requestController.receivedConnectionList);
+
+//upload user images
+router.route('/api/upload/user/images')
+	.post(passportJWT, vaultUploads.array('user_images'), userController.uploadUserImages);
 
 
 module.exports = router;

@@ -1,15 +1,7 @@
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
-var InteractionSchema = new Schema({
-    user_id:{
-        type: String,
-        default:null,
-    },
-    user: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User"
-    },
+var InteractionSchema = new Schema({   
     name:{
         type: String,
         deafult: null

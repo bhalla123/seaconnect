@@ -46,6 +46,11 @@ var UserSchema = new Schema({
         type: String,
         deafult: null
     },
+    bio:{
+        type: String,
+        deafult: null
+    },
+
 },
 {
     toObject: {
@@ -56,9 +61,8 @@ var UserSchema = new Schema({
     },
 });
 
-
 UserSchema.virtual('profile_image_link').get(function() {
-    return "http://localhost:3000/profile/"+this.profile_image;
+    return this.profile_image !=null ? "http://45.90.108.137:3000/profile/"+this.profile_image : "";
 });
 
 module.exports = mongoose.model('User', UserSchema);
