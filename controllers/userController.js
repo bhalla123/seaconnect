@@ -1,13 +1,13 @@
 var mongoose = require('mongoose');
 var User = require("../models/user");
 var UserImages = require("../models/userImages");
+var Rating = require("../models/ratings");
 const JWT = require('jsonwebtoken');
 const helperFxn = require('../helpers/hashPasswords');
 const responseHelper = require('../helpers/responseHelper');
 let bcrypt = require("bcryptjs");
 const uid = require('uid');
 const fs = require('fs');
-
 
 signtoken = user => {
   return JWT.sign({
@@ -116,14 +116,49 @@ module.exports = {
     getProfileDetail :async function(req, res) {
       try{
 
-            var user = await User.findById({ _id: req.params.id });
+            //Get rating
+            {
+               var loginUser = req.params.id;
 
-            if(user){
-              return responseHelper.post(res, user, 'Profile detail fetched Successfully');
-            }else{
-              return responseHelper.onError(res, {}, 'User does not exist');
+                var rating = await Rating.aggregate([
+                 {
+                      $match: {
+                        to_user_id: mongoose.Types.ObjectId(loginUser),
+                      }
+                  },
+                  {
+                      $lookup: {
+                          localField: "authorized_id",
+                          foreignField: "_id",
+                          from: "users",
+                          as: "raterDetail"
+                      }
+                  },
+                  { $unwind : '$raterDetail' },
+                  {
+                    $group: {
+                        _id: "$to_user_id",
+                        avgRating: { "$avg": { "$ifNull": ["$rating",0 ] } },
+                        raters: {
+                            $push: {
+                              user_name: { $ifNull: ["$raterDetail.user_name", null] },
+                              rating: { $ifNull: ["$rating", null] },
+                              bio: { $ifNull: ["$raterDetail.bio", null] }
+                            }
+                        },
+                    },
+                  },     
+              ]);
             }
+
+            var user_images = await UserImages.find({user_id: req.params.id});
+            var user = await User.findById({ _id: req.params.id }, { userImages: user_images, rating: rating}).select({ "first_name": 1,  "_id": 1, profile_image:1 , "user_name":1, "email":1, "interested_in":1, "gender":1, "latitude":1,"longitude":1, "looking_for":1, "age_range":1,"looking_for":1,"dob":1,"mobile_number":1,"bio":1});
+
+            return responseHelper.post(res, user, 'Profile detail fetched Successfully');
+            
+            
       }catch(err) {
+        console.log(err);
         return responseHelper.onError(res, err, 'Error while getting profile');
       }
     },
@@ -141,7 +176,8 @@ module.exports = {
                 mobile_number : req.body.mobile_number,
                 age_range:req.body.age_range,
                 email: req.body.email,
-                looking_for:req.body.looking_for
+                looking_for:req.body.looking_for,
+                bio:req.body.bio
             };
 
             var UserId = data.id;
@@ -232,7 +268,8 @@ module.exports = {
   uploadUserImages: async(req, res) => {
 
     var files = req.files;
-    
+              console.log(files);
+
     var data = [];
 
      //insert new

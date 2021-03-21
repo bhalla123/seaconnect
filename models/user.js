@@ -50,6 +50,14 @@ var UserSchema = new Schema({
         type: String,
         deafult: null
     },
+    latitude:{
+        type: String,
+        deafult: null
+    },
+    longitude:{
+        type: String,
+        deafult: null
+    },
 
 },
 {

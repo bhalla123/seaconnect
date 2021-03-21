@@ -14,27 +14,43 @@ module.exports = {
 
       var data = [];
 
-      const interactionId = req.body.interactions;
+      if(req.body.latitude && req.body.longitude){
+        var newUser = {
+          latitude : req.body.latitude,
+          longitude : req.body.longitude
+        }
 
-      var interactions = req.body;
+        var user = await User.findOneAndUpdate(
+                    {_id: req.user.id }
+                    ,newUser,
+                    { new: true}
+                ).lean();
+      }
+
+      var interactionId = req.body.interactions;
+
 
       //del already exist interactions
       await UserInteraction.deleteMany({user_id: req.user.id});
 
+      if(interactionId.length < 1){
+        var interactionId = await Interaction.find({}).select(['name']);
+
+        var objectIdArray = interactionId.map(s => mongoose.Types.ObjectId(s._id));
+        console.log("D", objectIdArray);
+  
+      }else{
+        var objectIdArray = interactionId.map(s => mongoose.Types.ObjectId(s));
+      }
+
       //insert new
-      var insert = await interactions.interactions.map(item => {
+      var insert = await interactionId.map(item => {
 
                         data.push({"user_id":req.user.id,
                         "interaction_id":item })
                         });
 
       await UserInteraction.insertMany(data);
-
-      /*var users = await  UserInteraction.find({
-        interaction_id: { $in: interactionId}
-      });*/
-
-      let objectIdArray = interactionId.map(s => mongoose.Types.ObjectId(s));
 
       let playerInfo = await UserInteraction.aggregate([
          {

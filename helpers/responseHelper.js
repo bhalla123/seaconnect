@@ -42,12 +42,21 @@ const Error = (res, resData, message) => {
     });
 }
 
-const getError = (message) => {
+const getError = (err, message) => {
     return {
         success: false,
         code: 400,
-        message: message
+        message: message,
+        //data:err
     };
+}
+
+const successWithoutData = (res, message) => {
+    return res.status(200).json({
+        success: true,
+        code: 200,
+        message: message
+    });
 }
 
 const unauthorized = (res, message) => {
@@ -60,8 +69,7 @@ const unauthorized = (res, message) => {
 }
 
 const onError = (res, err, message) => {
-    console.log(err);
-    return res.status(400).json(getError(message));
+    return res.status(400).json(getError(err,message));
 }
 
 module.exports = {
@@ -71,5 +79,6 @@ module.exports = {
     del,
     onError,
     unauthorized,
-    Error
+    Error,
+    successWithoutData
 }

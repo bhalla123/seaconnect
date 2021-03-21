@@ -61,6 +61,7 @@ module.exports = {
 			mobile_number:joi.string().empty(''),
 			looking_for:joi.string().empty(''),
 			dob:joi.string().empty(''),
+			bio:joi.string().empty(''),
 			confirm_password: joi.string().valid(joi.ref('password')).required().options({ language: { any: { allowOnly: 'must match password' } } }),
 		}),
 
@@ -75,12 +76,34 @@ module.exports = {
 			mobile_number:joi.string().empty(''),
 			looking_for:joi.string().empty(''),
 			dob:joi.string().empty(''),
+			bio:joi.string().empty(''),
 			id:joi.string().required(),
 		}),
 
-		updateProfileImage: joi.object().keys({
-			id: joi.string().required(),
-			profile_image: joi.string().empty(''),
+		/*filterInteractionSchema :joi.array().items(joi.object({
+		    interactions:joi.string().required()
+		})),*/
+
+		filterInteractionSchema :joi.object().keys({
+		    interactions:joi.array().required()
+		}),
+
+		connectionStatusSchema :joi.object().keys({
+		    status:joi.string().required(),
+		    connection_id:joi.string().required()
+		}),
+
+		connectionListSchema :joi.object().keys({
+		    status:joi.string().required()
+		}),
+
+		ratingSchema :joi.object().keys({
+		    rating:joi.number().required(),
+		    to_user_id:joi.string().required()
+		}),
+
+		requestStatusSchema :joi.object().keys({
+		    status:joi.string().required(),
 		}),
 
 	}

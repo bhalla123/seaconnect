@@ -24,6 +24,7 @@ var vaultUploads = multer({storage : vaultFileStorage })// file data uploading p
 const userController = require('../controllers/userController');
 const filterController = require('../controllers/filterUserController');
 const requestController = require('../controllers/requestController');
+const ratingController = require('../controllers/ratingController');
 
 //signIn
 router.route('/api/login')
@@ -47,7 +48,7 @@ router.route('/api/update/profile/image')
 
 //filter user by interactions
 router.route('/api/filter/users')
-	.post(passportJWT, validateBody(schemas.filterInteractionSchema), filterController.filterUsers);
+	.post(passportJWT, filterController.filterUsers);
 
 //filter user by interactions
 router.route('/api/get/interaction/list')
@@ -68,6 +69,13 @@ router.route('/api/get/received/connection/list')
 //upload user images
 router.route('/api/upload/user/images')
 	.post(passportJWT, vaultUploads.array('user_images'), userController.uploadUserImages);
+
+//Add Rating
+router.route('/api/add/rating')
+	.post(passportJWT, validateBody(schemas.ratingSchema), ratingController.addRating);
+
+router.route('/api/get/request/by/status')
+	.post(passportJWT, validateBody(schemas.requestStatusSchema), requestController.getRequestByStatus);
 
 
 module.exports = router;
