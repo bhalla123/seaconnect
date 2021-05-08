@@ -70,12 +70,19 @@ router.route('/api/get/received/connection/list')
 router.route('/api/upload/user/images')
 	.post(passportJWT, vaultUploads.array('user_images'), userController.uploadUserImages);
 
-//Add Rating
-router.route('/api/add/rating')
-	.post(passportJWT, validateBody(schemas.ratingSchema), ratingController.addRating);
+//Add Review
+router.route('/api/add/reviews')
+	.post(passportJWT, ratingController.addReview);
+
+//Get reviews
+router.route('/api/get/reviews')
+	.post(passportJWT, ratingController.getReview);
 
 router.route('/api/get/request/by/status')
 	.post(passportJWT, validateBody(schemas.requestStatusSchema), requestController.getRequestByStatus);
+
+router.route('/api/logout')
+	.post(passportJWT, userController.logoutUser);
 
 
 module.exports = router;

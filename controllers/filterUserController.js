@@ -15,10 +15,18 @@ module.exports = {
       var data = [];
 
       if(req.body.latitude && req.body.longitude){
+        var lat = req.body.latitude;
+        var lng = req.body.longitude;
+
         var newUser = {
-          latitude : req.body.latitude,
-          longitude : req.body.longitude
+          latitude : lat,
+          longitude : lng,
+          location: {
+            type: "Point",
+            coordinates: [parseFloat(lng), parseFloat(lat)]
+          }
         }
+
 
         var user = await User.findOneAndUpdate(
                     {_id: req.user.id }
@@ -37,11 +45,33 @@ module.exports = {
         var interactionId = await Interaction.find({}).select(['name']);
 
         var objectIdArray = interactionId.map(s => mongoose.Types.ObjectId(s._id));
-        console.log("D", objectIdArray);
   
       }else{
         var objectIdArray = interactionId.map(s => mongoose.Types.ObjectId(s));
       }
+
+      var userIds = await User.find(
+              {
+                "location": {
+                  "$nearSphere": {
+                    "$geometry": {
+                      "type": "Point",
+                      "coordinates": [ parseFloat(lng), parseFloat(lat) ],
+                      "maxDistance":500, 
+                      'distanceField' : 'distance', 
+                       spherical: true
+                    }
+                  }
+                }
+              }).select('id');
+
+
+      var nearUserIds = [];
+      var users = await userIds.map(item => {
+                        if(item._id != req.user.id){
+                          nearUserIds.push(item._id)
+                        }
+                    });
 
       //insert new
       var insert = await interactionId.map(item => {
@@ -52,11 +82,13 @@ module.exports = {
 
       await UserInteraction.insertMany(data);
 
+
+
       let playerInfo = await UserInteraction.aggregate([
          {
               $match: {
                   interaction_id: { $in: objectIdArray},
-                  user_id: {$ne: mongoose.Types.ObjectId(req.user.id)}
+                  user_id: { $in: nearUserIds },
               }
           },
         {
@@ -73,6 +105,7 @@ module.exports = {
       return responseHelper.post(res, playerInfo, 'Interaction List');
 
     }catch(err){
+      console.log(err);
       return responseHelper.onError(res, err, 'Error while filtering users');
     }
   },

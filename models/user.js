@@ -58,6 +58,10 @@ var UserSchema = new Schema({
         type: String,
         deafult: null
     },
+    location: {
+       type: { type: String },
+       coordinates: []
+    },
 
 },
 {
@@ -72,5 +76,8 @@ var UserSchema = new Schema({
 UserSchema.virtual('profile_image_link').get(function() {
     return this.profile_image !=null ? "http://45.90.108.137:3000/profile/"+this.profile_image : "";
 });
+
+UserSchema.index({ location: "2dsphere" });
+
 
 module.exports = mongoose.model('User', UserSchema);

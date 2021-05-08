@@ -94,16 +94,37 @@ module.exports = {
                   from: "users",
                   as: "userDetail"
               }
-          }  ,
+          },
+          { $unwind : '$userDetail' }      
+      ]);
+      
+       //get connection request
+        let userDetails = await Connection.aggregate([
+         {
+              $match: {
+                  to_user_id: mongoose.Types.ObjectId(senderId),
+                  status: req.body.status
+              }
+          },
+          {
+              $lookup: {
+                  localField: "authorized_id",
+                  foreignField: "_id",
+                  from: "users",
+                  as: "userDetail"
+              }
+          },
           { $unwind : '$userDetail' }      
       ]);
 
-      if(userDetail.length > 0){
-        return responseHelper.post(res, userDetail, "Received request list");
+
+      var af =  userDetail.concat(userDetails);
+
+      if(af.length > 0){
+        return responseHelper.post(res, (af), "Received request list");
       }else{
         return responseHelper.successWithoutData(res, 'No record found');
       }
-      
     }catch(err){
       console.log(err);
       return responseHelper.onError(res, err, 'Error while getting request');

@@ -281,6 +281,14 @@ module.exports = {
       var resp = await UserImages.insertMany(data);
 
     return responseHelper.get(res, resp,  'User images fetch successfully.');
+  },
+
+  logoutUser: async(req, res) => {
+
+    var token = req.body.token;
+    JWT.destroy(token)
+
+   // return responseHelper.get(res, {},  'User logout successfully.');
   }
 }
 

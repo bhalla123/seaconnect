@@ -25,18 +25,54 @@ module.exports = {
 
   addReview: async(req, res) => {
     try{
-          data =  {
-            "to_user_id":req.body.to_user_id,
-            "authorized_id":req.user.id,
-            "review": req.body.review,
-            "message":req.body.message
-          }
+          var publicData = [];
+          var privateData = [];
+          var toUserId = req.body.to_user_id;
 
-        var con = await Review.create(data);
+          var publicBodyData = req.body.public;
+          var privateBodyData = req.body.private;
 
-        return responseHelper.post(res, con, 'Review added successfully');
+          var publicReview  = await publicBodyData.map(item => {
+                            publicData.push({
+                                  "to_user_id":toUserId,
+                                  "authorized_id":req.user.id,
+                                  "question":item.question,
+                                  "review":item.review,
+                                  "review_type":"public"
+                                })
+                            });
+
+          var privateReview = await privateBodyData.map(item => {
+                            privateData.push({
+                                  "to_user_id":toUserId,
+                                  "authorized_id":req.user.id,
+                                  "question":item.question,
+                                  "review":item.review,
+                                  "review_type":"private"
+                                })
+                            });
+
+
+         await Review.insertMany(publicData);
+         await Review.insertMany(privateData);
+
+        return responseHelper.post(res, {}, 'Review added successfully');
     }catch(err){
       return responseHelper.onError(res, err, 'Error while adding review');
+    }
+  },
+
+  getReview: async(req, res) => {
+    try{
+
+        //Get reveiws
+        var reviews = await Review.find({"authorized_id": mongoose.Types.ObjectId(req.user.id), 
+                                    "to_user_id": mongoose.Types.ObjectId(req.body.to_user_id) },
+                                  ).lean();
+        
+        return responseHelper.post(res, reviews, 'Review get successfully');
+    }catch(err){
+      return responseHelper.onError(res, err, 'Error while fetching review');
     }
   }
 }
