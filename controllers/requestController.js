@@ -2,6 +2,7 @@ var mongoose = require('mongoose');
 var User = require("../models/user");
 var Interaction = require("../models/interactions");
 var UserInteraction = require("../models/userInteractions");
+var Review = require("../models/reviews");
 var Connection = require("../models/connections");
 const responseHelper = require('../helpers/responseHelper');
 const fs = require('fs');
@@ -79,12 +80,62 @@ module.exports = {
 
         var senderId = req.user.id;
 
-        //get connection request
-        let userDetail = await Connection.aggregate([
-         {
+        if(req.body.status != "notReviewed"){
+
+          //get connection request
+          let userDetail = await Connection.aggregate([
+            {
+                $match: {
+                    authorized_id: mongoose.Types.ObjectId(senderId),
+                    status: req.body.status
+                }
+            },
+            {
+                $lookup: {
+                    localField: "to_user_id",
+                    foreignField: "_id",
+                    from: "users",
+                    as: "userDetail"
+                }
+            },
+            { $unwind : '$userDetail' }      
+          ]);
+
+          //get connection request
+          let userDetails = await Connection.aggregate([
+           {
+                $match: {
+                    to_user_id: mongoose.Types.ObjectId(senderId),
+                    status: req.body.status
+                }
+            },
+            {
+                $lookup: {
+                    localField: "authorized_id",
+                    foreignField: "_id",
+                    from: "users",
+                    as: "userDetail"
+                }
+            },
+            { $unwind : '$userDetail' }      
+          ]);
+        
+          var af =  userDetail.concat(userDetails);
+
+          if(af.length > 0){
+            return responseHelper.post(res, (af), "Received request list");
+          }else{
+            return responseHelper.successWithoutData(res, 'No record found');
+          }
+      }else{
+
+          //get connection request
+          let userDetail = await Connection.aggregate([
+          {
               $match: {
                   authorized_id: mongoose.Types.ObjectId(senderId),
-                  status: req.body.status
+                  is_reviwed: false,
+                  status: "accepted"
               }
           },
           {
@@ -96,34 +147,13 @@ module.exports = {
               }
           },
           { $unwind : '$userDetail' }      
-      ]);
-      
-       //get connection request
-        let userDetails = await Connection.aggregate([
-         {
-              $match: {
-                  to_user_id: mongoose.Types.ObjectId(senderId),
-                  status: req.body.status
-              }
-          },
-          {
-              $lookup: {
-                  localField: "authorized_id",
-                  foreignField: "_id",
-                  from: "users",
-                  as: "userDetail"
-              }
-          },
-          { $unwind : '$userDetail' }      
-      ]);
+        ]); 
 
-
-      var af =  userDetail.concat(userDetails);
-
-      if(af.length > 0){
-        return responseHelper.post(res, (af), "Received request list");
-      }else{
-        return responseHelper.successWithoutData(res, 'No record found');
+        if(userDetail.length > 0){
+            return responseHelper.post(res, (userDetail), "Not reviwed user's list");
+          }else{reviwed
+            return responseHelper.successWithoutData(res, 'No record found');
+          }
       }
     }catch(err){
       console.log(err);

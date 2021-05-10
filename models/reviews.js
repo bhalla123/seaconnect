@@ -22,6 +22,10 @@ var ReviewSchema = new Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
     },
+    connection_id:{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Connection'
+    }
 },{
     timestamps: true
 });

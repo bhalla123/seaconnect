@@ -13,7 +13,11 @@ var ConnectionSchema = new Schema({
     status :{
     	type: String,
         deafult: null
-    }
+    },
+    is_reviwed:{
+        type: String,
+        default:false
+    },
 },{ versionKey: false });
 
 

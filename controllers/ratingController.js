@@ -2,6 +2,7 @@ var mongoose = require('mongoose');
 var User = require("../models/user");
 var Rating = require("../models/ratings");
 var Review = require("../models/reviews");
+var Connection = require("../models/connections");
 const responseHelper = require('../helpers/responseHelper');
 const fs = require('fs');
 
@@ -28,6 +29,7 @@ module.exports = {
           var publicData = [];
           var privateData = [];
           var toUserId = req.body.to_user_id;
+          var connectionId = req.body.connection_id;
 
           var publicBodyData = req.body.public;
           var privateBodyData = req.body.private;
@@ -38,7 +40,8 @@ module.exports = {
                                   "authorized_id":req.user.id,
                                   "question":item.question,
                                   "review":item.review,
-                                  "review_type":"public"
+                                  "review_type":"public",
+                                  "connection_id": connectionId
                                 })
                             });
 
@@ -48,13 +51,19 @@ module.exports = {
                                   "authorized_id":req.user.id,
                                   "question":item.question,
                                   "review":item.review,
-                                  "review_type":"private"
+                                  "review_type":"private",
+                                  "connection_id": connectionId
                                 })
                             });
-
+console.log(privateData);
 
          await Review.insertMany(publicData);
          await Review.insertMany(privateData);
+
+         var user = await Connection.findOneAndUpdate(
+                    {_id: connectionId }
+                    ,{is_reviwed:true}
+                ).lean();
 
         return responseHelper.post(res, {}, 'Review added successfully');
     }catch(err){

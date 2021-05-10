@@ -81,8 +81,7 @@ router.route('/api/get/reviews')
 router.route('/api/get/request/by/status')
 	.post(passportJWT, validateBody(schemas.requestStatusSchema), requestController.getRequestByStatus);
 
-router.route('/api/logout')
-	.post(passportJWT, userController.logoutUser);
+
 
 
 module.exports = router;

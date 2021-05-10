@@ -8,7 +8,8 @@ var bodyParser = require("body-parser");
 
 // Connect to Mongoose and set connection variable
 // Deprecated: mongoose.connect('mongodb://localhost/resthub');
-//mongoose.connect('mongodb://localhost:27017/?readPreference=primary&appname=MongoDB%20Compass&ssl=false/seaconnect', { useNewUrlParser: true, useUnifiedTopology: true});
+//mongoose.connect(
+//'mongodb://localhost:27017/?readPreference=primary&appname=MongoDB%20Compass&ssl=false/seaconnect', { useNewUrlParser: true, useUnifiedTopology: true});
 
 mongoose.connect('mongodb://localhost:27017/seaconnect', { useNewUrlParser: true, useUnifiedTopology: true});
 var db = mongoose.connection;
