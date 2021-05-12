@@ -55,7 +55,6 @@ module.exports = {
                                   "connection_id": connectionId
                                 })
                             });
-console.log(privateData);
 
          await Review.insertMany(publicData);
          await Review.insertMany(privateData);

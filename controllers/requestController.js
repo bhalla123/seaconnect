@@ -151,7 +151,7 @@ module.exports = {
 
         if(userDetail.length > 0){
             return responseHelper.post(res, (userDetail), "Not reviwed user's list");
-          }else{reviwed
+          }else{
             return responseHelper.successWithoutData(res, 'No record found');
           }
       }
