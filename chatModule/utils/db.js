@@ -7,7 +7,7 @@ class Db {
 	
 	constructor() {
 		//const  url  =  "mongodb://localhost:27017/seaconnect";
-		const  url  =  "mongodb://localhost:27017/?readPreference=primary&appname=MongoDB%20Compass&ssl=false";
+		const  url  =  "";
 		const  connect  =  mongoose.connect(url, { useNewUrlParser: true  });
 	}
 	query(sql, args) {
