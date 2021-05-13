@@ -2,6 +2,7 @@ var mongoose = require('mongoose');
 var User = require("../models/user");
 var Rating = require("../models/ratings");
 var Review = require("../models/reviews");
+var ReviewedBy = require("../models/reviwedby");
 var Connection = require("../models/connections");
 const responseHelper = require('../helpers/responseHelper');
 const fs = require('fs');
@@ -59,13 +60,30 @@ module.exports = {
          await Review.insertMany(publicData);
          await Review.insertMany(privateData);
 
-         var user = await Connection.findOneAndUpdate(
-                    {_id: connectionId }
-                    ,{is_reviwed:true}
-                ).lean();
+         var reviwebyData =  {
+            "connection_id": connectionId,
+            "user_id":req.user.id,
+          }
+
+         var reviwed = await ReviewedBy.create(reviwebyData);
+
+         if(reviwed){
+            var reviwedCount = await ReviewedBy.find({"connection_id": connectionId}).count();
+
+            if(reviwedCount == 2){
+              var a = await Connection.findOneAndUpdate({
+                  _id: connectionId,
+                }, {
+                  is_reviwed: true
+                }).lean();
+
+              console.log(a);
+            }
+         }
 
         return responseHelper.post(res, {}, 'Review added successfully');
     }catch(err){
+      console.log(err);
       return responseHelper.onError(res, err, 'Error while adding review');
     }
   },

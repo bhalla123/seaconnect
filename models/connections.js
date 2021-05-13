@@ -15,7 +15,7 @@ var ConnectionSchema = new Schema({
         deafult: null
     },
     is_reviwed:{
-        type: String,
+        type: Boolean,
         default:false
     },
 },{ versionKey: false });
