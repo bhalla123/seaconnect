@@ -25,6 +25,7 @@ const userController = require('../controllers/userController');
 const filterController = require('../controllers/filterUserController');
 const requestController = require('../controllers/requestController');
 const ratingController = require('../controllers/ratingController');
+const notificationController = require('../controllers/notificationController');
 
 //signIn
 router.route('/api/login')
@@ -77,6 +78,18 @@ router.route('/api/add/reviews')
 //Get reviews
 router.route('/api/get/reviews')
 	.post(passportJWT, ratingController.getReview);
+
+//insert demo chat
+router.route('/api/chat/demo')
+	.get(passportJWT, notificationController.chatInsertDemo);
+
+//Get chat list
+router.route('/api/get/chat/list')
+	.get(passportJWT, notificationController.chatList);
+
+//Get chat pagination list
+router.route('/api/chat/pagination/list')
+	.post(passportJWT, notificationController.chatPaginationList);
 
 router.route('/api/get/request/by/status')
 	.post(passportJWT, validateBody(schemas.requestStatusSchema), requestController.getRequestByStatus);

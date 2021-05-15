@@ -14,41 +14,15 @@ class Socket{
     socketEvents(){
         this.io.on('connection', (socket) => {
 
-            socket.on('deleteChat', async (chatId) => {  
-                const response = await helper.deleteChatRecord(chatId);
-
-                if(response &&  response !== null){
-                    this.io.emit('chatDeleted', response);
-                }else{
-                    console.error(`Socket connection failed, for chat Id ${chatId}.`);
-                }
-            });
-
-            /**
-            * get the user's Chat list
-            */
-            socket.on('chatList', async (userId) => {
-                const result = await helper.getChatList(userId);
-                this.io.to(socket.id).emit('chatListRes', {
-                    userConnected: false,
-                    chatList: result.chatlist
-                });
-
-                socket.broadcast.emit('chatListRes', {
-                    userConnected: true,
-                    userId: userId,
-                    socket_id: socket.id
-                });
-            });
             /**
             * get the get messages
             */
             socket.on('getMessages', async (data) => { 
-                const result = await helper.getMessages(data.pokeId);
+                const result = await helper.getMessages(data.connectionId);
 				if (result === null) {
-                    this.io.emit('getMessagesResponse', {result:[], pokeId:data.pokeId});
+                    this.io.emit('getMessagesResponse', {result:[], connectionId:data.connectionId});
 				}else{
-                    this.io.emit('getMessagesResponse', {result:result, pokeId:data.pokeId});
+                    this.io.emit('getMessagesResponse', {result:result, connectionId:data.connectionId});
 				}
             });
 
@@ -65,14 +39,6 @@ class Socket{
                 //socket.to(response.toSocketId).emit('addMessageResponse', response);
                 this.io.emit('addMessageResponse', response);
             });
-
-            socket.on('disconnect', async () => {
-                const isLoggedOut = await helper.logoutUser(socket.id);
-                socket.broadcast.emit('chatListRes', {
-                    userDisconnected: true,
-                    socket_id: socket.id
-                });
-        	});
         });
     }
 
@@ -88,16 +54,6 @@ class Socket{
     }
 
     socketConfig(){
-        this.io.use( async (socket, next) => {
-            let userId = socket.request._query['id'];
-            let userSocketId = socket.id;
-            const response = await helper.addSocketId(userId, userSocketId);
-            if(response &&  response !== null){
-                next();
-            }else{
-                console.error(`Socket connection failed, for  user Id ${userId}.`);
-            }
-        });
         this.socketEvents();
     }
 }

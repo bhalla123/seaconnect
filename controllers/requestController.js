@@ -3,6 +3,7 @@ var User = require("../models/user");
 var Interaction = require("../models/interactions");
 var UserInteraction = require("../models/userInteractions");
 var Review = require("../models/reviews");
+var ReviewedBy = require("../models/reviwedby");
 var Connection = require("../models/connections");
 const responseHelper = require('../helpers/responseHelper');
 const fs = require('fs');
@@ -129,28 +130,57 @@ module.exports = {
           }
       }else{
 
-          //get connection request
-          let userDetail = await Connection.aggregate([
-          {
-              $match: {
-                  authorized_id: mongoose.Types.ObjectId(senderId),
-                  is_reviwed: false,
-                  status: "accepted"
-              }
-          },
-          {
-              $lookup: {
-                  localField: "to_user_id",
-                  foreignField: "_id",
-                  from: "users",
-                  as: "userDetail"
-              }
-          },
-          { $unwind : '$userDetail' }      
-        ]); 
+          var alreadyReviwedId = await ReviewedBy.find({"user_id": mongoose.Types.ObjectId(req.user.id)}).select(['connection_id']);
 
-        if(userDetail.length > 0){
-            return responseHelper.post(res, (userDetail), "Not reviwed user's list");
+          var objectIdArray = alreadyReviwedId.map(s => mongoose.Types.ObjectId(s.connection_id));
+
+              //get connection request
+              let userDetail = await Connection.aggregate([
+              {
+                  $match: {
+                      authorized_id: mongoose.Types.ObjectId(senderId),
+                      _id: { $nin: objectIdArray},
+                      is_reviwed: false,
+                      status: "accepted"
+                  }
+              },
+              {
+                  $lookup: {
+                      localField: "to_user_id",
+                      foreignField: "_id",
+                      from: "users",
+                      as: "userDetail"
+                  }
+              },
+              { $unwind : '$userDetail' }      
+            ]); 
+            
+            //get connection request
+              let userDetails = await Connection.aggregate([
+               {
+                    $match: {
+                        to_user_id: mongoose.Types.ObjectId(senderId),
+                        _id: { $nin: objectIdArray},
+                        is_reviwed: false,
+                        status: "accepted"
+                    }
+                },
+                {
+                    $lookup: {
+                        localField: "authorized_id",
+                        foreignField: "_id",
+                        from: "users",
+                        as: "userDetail"
+                    }
+                },
+                { $unwind : '$userDetail' }      
+              ]);
+
+              var af =  userDetail.concat(userDetails);
+
+
+        if(af.length > 0){
+            return responseHelper.post(res, (af), "Not reviwed user's list");
           }else{
             return responseHelper.successWithoutData(res, 'No record found');
           }
