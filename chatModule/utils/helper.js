@@ -28,8 +28,7 @@ class Helper{
 	async getMessages(connectionId){
 		try {
 			var chatMsgList = await Chat.find({"connection_id": mongoose.Types.ObjectId(connectionId)})
-										.sort({'chat_id': -1})
-										.limit(15);
+										.sort({'chat_id': -1});
 
 			console.log("list", chatMsgList);
 			return chatMsgList;

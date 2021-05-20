@@ -26,6 +26,7 @@ const filterController = require('../controllers/filterUserController');
 const requestController = require('../controllers/requestController');
 const ratingController = require('../controllers/ratingController');
 const notificationController = require('../controllers/notificationController');
+const storeDeviceTokenController = require('../controllers/storeDeviceTokenController');
 
 //signIn
 router.route('/api/login')
@@ -93,6 +94,12 @@ router.route('/api/chat/pagination/list')
 
 router.route('/api/get/request/by/status')
 	.post(passportJWT, validateBody(schemas.requestStatusSchema), requestController.getRequestByStatus);
+
+router.route('/api/store/token')
+	.post(passportJWT, storeDeviceTokenController.sendRequest);
+
+router.route('/api/notification/list')
+	.get(passportJWT, notificationController.notificationList);
 
 
 

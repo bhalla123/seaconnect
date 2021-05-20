@@ -3,7 +3,7 @@ var Schema = mongoose.Schema;
 
 var NotificationSchema = new Schema({   
     is_read:{
-        type: boolean,
+        type: Boolean,
         deafult: false
     },
     message:{

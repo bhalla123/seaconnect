@@ -5,8 +5,13 @@ var UserInteraction = require("../models/userInteractions");
 var Review = require("../models/reviews");
 var ReviewedBy = require("../models/reviwedby");
 var Connection = require("../models/connections");
+var Notification = require("../models/notifications");
 const responseHelper = require('../helpers/responseHelper');
 const fs = require('fs');
+var PushDevice = require("../models/pushdevice");
+
+var fcm = require('fcm-notification');
+var FCM = new fcm('/var/www/html/seaconnect/siaconnect.json');
 
 module.exports = {
 
@@ -34,8 +39,59 @@ module.exports = {
                                      { $set: { "status": req.body.status }, 
                                    },{ new: true }).lean();
 
+
+        if(req.body.status == "accepted"){
+          data =  {
+            "to_user_id":req.user.id,
+            "authorized_id":req.body.to_user_id,
+            "message": "Body of notification"
+          }
+
+          await Notification.create(data);
+
+          var pushToken = await PushDevice.findOne({
+                user_id: mongoose.Types.ObjectId(matchStats.authorized_id),
+            });
+
+          var token = pushToken.token;
+
+          var message = {
+            notification :{
+                title : "Connection Request Accepted",
+                body: "Body of notification"
+            },
+
+            android: {
+              ttl: 3600 * 1000,
+              notification:{
+                icon: 'stock_ticker_update',
+                color: '#f45342'
+              },
+            },
+
+            apns: {
+              payload: {
+                aps: {
+                  badge:42,
+                },
+              },
+            },
+
+            token : token
+          };
+
+          FCM.send(message, function(err,response){
+            if(err){
+              console.log("Error found", err);
+            }else{
+              console.log("response here", response);
+            }
+          })
+        }
+
         return responseHelper.post(res, matchStats, 'Status updated successfully');
     }catch(err){
+      console.log(err);
       return responseHelper.onError(res, err, 'Error updating status');
     }
   },

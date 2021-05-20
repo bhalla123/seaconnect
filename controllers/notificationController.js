@@ -3,6 +3,7 @@ var User = require("../models/user");
 var Chat = require(".././chatModule/model/chat");
 const responseHelper = require('../helpers/responseHelper');
 const fs = require('fs');
+var Notification = require("../models/notifications");
 
 module.exports = {
 
@@ -89,7 +90,25 @@ module.exports = {
 		}catch(err){
 			console.log(err);
 		}
+	},
+
+	notificationList: async(req, res) => {
+		try{
+			var loginId = req.user.id;
+			var notificationList = await Notification.find({"to_user_id": mongoose.Types.ObjectId(loginId) });
+
+			var finalData = {
+				"notificationList" : notificationList,
+				"notificationCount" : notificationList.length
+			}
+
+			return responseHelper.post(res, finalData, "Notification list");
+		}catch(err){
+			console.log(err);
+			return responseHelper.onError(res, err, 'Something went wrong')
+		}
 	}
+
 }
 
 
