@@ -119,7 +119,7 @@ module.exports = {
 			var loginId = req.user.id;
 			var notificationList = await Notification.updateMany(
 					{"to_user_id": mongoose.Types.ObjectId(loginId) },
-					{"is_read": true}
+					{ $set: { is_read: true } }
 				);
 
 	        return responseHelper.successWithoutData(res, {},  'Count Reset successfully');
@@ -137,6 +137,20 @@ module.exports = {
 											"is_read":false});
 
 			return responseHelper.successWithoutData(res, notificationList, 'Notification count');
+		}catch(err){
+			console.log(err);
+			return responseHelper.onError(res, err, 'Something went wrong')
+		}
+	},
+
+	resetChatCount: async(req, res) => {
+		try{
+			var loginId = req.user.id;
+			var a = await Chat.update({"to_user_id": mongoose.Types.ObjectId(loginId), 
+									"connection_id":mongoose.Types.ObjectId(req.body.connection_id)}, 
+									{ $set: { is_read: true } });
+
+			return responseHelper.successWithoutData(res, a, 'chat count reset');
 		}catch(err){
 			console.log(err);
 			return responseHelper.onError(res, err, 'Something went wrong')

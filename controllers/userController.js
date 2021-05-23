@@ -121,34 +121,34 @@ module.exports = {
             {
               var loginUser = req.params.id;
 
-                var rating = await Rating.aggregate([
+                var rating = await Review.aggregate([
                  {
                       $match: {
                         to_user_id: mongoose.Types.ObjectId(loginUser),
+                        review_type:"public",
+                        type: "rating"
                       }
                   },
-                  {
-                      $lookup: {
-                          localField: "authorized_id",
-                          foreignField: "_id",
-                          from: "users",
-                          as: "raterDetail"
-                      }
+
+                  { 
+                    $addFields: {
+                      convertedRating: { $toDecimal: "$review"}
+                    },  
                   },
-                  { $unwind : '$raterDetail' },
+
                   {
                     $group: {
                         _id: "$to_user_id",
-                        avgRating: { "$avg": { "$ifNull": ["$rating",0 ] } },
-                        raters: {
+                        avgRating: { "$avg": { "$ifNull": ["$convertedRating", 0 ] } },
+                        /*raters: {
                             $push: {
                               user_name: { $ifNull: ["$raterDetail.user_name", null] },
-                              rating: { $ifNull: ["$rating", null] },
+                              rating: { $ifNull: ["$review", null] },
                               bio: { $ifNull: ["$raterDetail.bio", null] }
                             }
-                        },
+                        },*/
                     },
-                  },     
+                  } 
               ]);
 
               var reviews = await Review.aggregate([
@@ -168,7 +168,7 @@ module.exports = {
                       }
                   },
                   { $unwind : '$reviewdBy' },    
-                  { "$project": {"_id": 1, "review":1, "review_type":1, "question":1,"authorized_id":1, "reviewdBy.first_name":1, "reviewdBy.user_name":1,  "reviewdBy.bio":1}},
+                  { "$project": {"_id": 1, "review":1, "avg_rating":1, "review_type":1, "question":1,"authorized_id":1, "reviewdBy.first_name":1, "reviewdBy.user_name":1,  "reviewdBy.bio":1}},
               ]);
 
             }

@@ -6,6 +6,7 @@ var Review = require("../models/reviews");
 var ReviewedBy = require("../models/reviwedby");
 var Connection = require("../models/connections");
 var Notification = require("../models/notifications");
+var Chat = require(".././chatModule/model/chat");
 const responseHelper = require('../helpers/responseHelper');
 const fs = require('fs');
 var PushDevice = require("../models/pushdevice");
@@ -229,7 +230,7 @@ module.exports = {
           ]);
 
           //get connection request
-          let userDetails = await Connection.aggregate([
+          var userDetails = await Connection.aggregate([
            {
                 $match: {
                     to_user_id: mongoose.Types.ObjectId(senderId),
@@ -246,8 +247,20 @@ module.exports = {
             },
             { $unwind : '$userDetail' }      
           ]);
-        
+
           var af =  userDetail.concat(userDetails);
+
+          const promises = await af.map(async (item) => {
+                          var chat = await Chat.countDocuments({
+                            "to_user_id": mongoose.Types.ObjectId(senderId),
+                            "connection_id" : item._id,
+                            "is_read":false
+                          })
+                          item.messageCount = chat;
+                          return item
+                        });
+
+          const results = await Promise.all(promises)
 
           if(af.length > 0){
             return responseHelper.post(res, (af), "Received request list");

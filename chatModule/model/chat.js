@@ -7,6 +7,10 @@ const  chatSchema  =  new Schema({
         type: String,
         deafult: null
     },
+    is_read :{
+     type: Boolean,
+      deafult: false
+    },
     from_user_id:{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'

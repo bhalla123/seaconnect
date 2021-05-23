@@ -29,11 +29,20 @@ module.exports = {
     try{
           var publicData = [];
           var privateData = [];
+          var publicRating = 0;
           var toUserId = req.body.to_user_id;
           var connectionId = req.body.connection_id;
 
           var publicBodyData = req.body.public;
           var privateBodyData = req.body.private;
+
+          var p  = await publicBodyData.map(item => {
+                              if(item.type == "rating"){
+                                publicRating+=item.review;
+                              }
+                            });
+
+          var avgRating = publicRating/3;
 
           var publicReview  = await publicBodyData.map(item => {
                             publicData.push({
@@ -43,9 +52,11 @@ module.exports = {
                                   "review":item.review,
                                   "review_type":"public",
                                   "type":item.type,
-                                  "connection_id": connectionId
+                                  "connection_id": connectionId,
+                                  "avg_rating": avgRating
                                 })
                             });
+
 
           var privateReview = await privateBodyData.map(item => {
                             privateData.push({
@@ -55,7 +66,8 @@ module.exports = {
                                   "review":item.review,
                                   "type":item.type,
                                   "review_type":"private",
-                                  "connection_id": connectionId
+                                  "connection_id": connectionId,
+                                  "avg_rating": avgRating
                                 })
                             });
 

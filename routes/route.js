@@ -107,4 +107,7 @@ router.route('/api/notification/reset/count')
 router.route('/api/notification/count')
 	.get(passportJWT, notificationController.notificationCount);
 
+router.route('/api/reset/chat/count')
+	.post(passportJWT, notificationController.resetChatCount);
+
 module.exports = router;

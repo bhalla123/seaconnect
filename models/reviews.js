@@ -14,6 +14,10 @@ var ReviewSchema = new Schema({
         type: String,
         default:null
     },
+    avg_rating:{
+        type: String,
+        default:null
+    },
     type:{
         type: String,
         default:null

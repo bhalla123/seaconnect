@@ -19,6 +19,10 @@ const chatSchema = new Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Connection'
     },
+    is_read :{
+     type: Boolean,
+      deafult: false
+    },
     date:{
         type: String,
         deafult: null
