@@ -1,22 +1,22 @@
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
-var ReviewSchema = new Schema({   
-    review:{
-        type: String,
-        deafult: null
+var NotificationSchema = new Schema({   
+    is_read:{
+        type: Boolean,
+        deafult: false
     },
-    question:{
+    title:{
+        type: String,
+        deafult: false
+    },
+    message:{
     	type: String,
         deafult:null
-    },
-    review_type:{
-        type: String,
-        default:null
-    },
+    }, 
     type:{
         type: String,
-        default:null
+        deafult:null
     },
     authorized_id:{
         type: mongoose.Schema.Types.ObjectId,
@@ -26,12 +26,8 @@ var ReviewSchema = new Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
     },
-    connection_id:{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Connection'
-    }
 },{
     timestamps: true
 });
 
-module.exports = mongoose.model('reviews', ReviewSchema);
+module.exports = mongoose.model('notifications', NotificationSchema);

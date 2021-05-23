@@ -17,17 +17,78 @@ module.exports = {
 
   sendRequest: async(req, res) => {
     try{
+          var loginUser = req.user.id;
+
+          var userName = await User.findOne({"_id":loginUser}, {user_name:1}).lean();
+         
           data =  {
             "authorized_id": req.user.id,
             "to_user_id":req.body.to_user_id,
             "status":"open"
           }
 
-        var con = await Connection.create(data);
+          var con = await Connection.create(data);
 
-        return responseHelper.post(res, con, 'Request sent successfully');
+        //Notification
+        {
+          notification_data =  {
+            "to_user_id":req.body.to_user_id,
+            "authorized_id":req.user.id,
+            "type":"ConnectionRequestSent",
+            "title":"Connection Request Sent",
+            "message": userName.user_name + " sent you connection request"
+          }
+
+          await Notification.create(notification_data);
+
+          var pushToken = await PushDevice.findOne({
+                user_id: mongoose.Types.ObjectId(req.body.to_user_id),
+            });
+
+          if(token){
+            var token = pushToken.token;
+
+            var message = {
+              notification :{
+                title: "Connection Request Sent",
+                body: username.user_name + " send you connection request",
+              },
+
+              android: {
+                ttl: 3600 * 1000,
+                notification:{
+                  icon: 'stock_ticker_update',
+                  color: '#f45342',
+                },
+              },
+
+              apns: {
+                payload: {
+                  aps: {
+                    badge:42,
+                    sound : "default",
+                    type:"ConnectionRequestSent"
+                  },
+                },
+              },
+
+              token : token
+            };
+
+            FCM.send(message, function(err,response){
+              if(err){
+                console.log("Error found", err);
+              }else{
+                console.log("response here", response);
+              }
+            })
+          }          
+        }
+
+      return responseHelper.post(res, con, 'Request sent successfully');
     }catch(err){
-      return responseHelper.onError(res, err, 'Error while sending status request');
+      console.log(err);
+      return responseHelper.onError(res, (err), 'Error while sending status request');
     }
   },
 
@@ -39,12 +100,17 @@ module.exports = {
                                      { $set: { "status": req.body.status }, 
                                    },{ new: true }).lean();
 
-
         if(req.body.status == "accepted"){
+          loginUser = req.user.id;
+
+          userName = await User.findOne({"_id": loginUser}, {user_name:1}).lean();
+          
           data =  {
-            "to_user_id":req.user.id,
-            "authorized_id":req.body.to_user_id,
-            "message": "Body of notification"
+            "to_user_id":matchStats.authorized_id,
+            "authorized_id":req.user.id,
+            "type":"ConnectionRequestAccepted",
+            "title":"Connection Request Accepted",
+            "message": userName.user_name + " accepted yor connection request"
           }
 
           await Notification.create(data);
@@ -53,40 +119,44 @@ module.exports = {
                 user_id: mongoose.Types.ObjectId(matchStats.authorized_id),
             });
 
-          var token = pushToken.token;
+          if(token){
+            var token = pushToken.token;
 
-          var message = {
-            notification :{
+            var message = {
+              notification :{
                 title : "Connection Request Accepted",
-                body: "Body of notification"
-            },
-
-            android: {
-              ttl: 3600 * 1000,
-              notification:{
-                icon: 'stock_ticker_update',
-                color: '#f45342'
+                body: userName.user_name + " accepted yor connection request",
               },
-            },
 
-            apns: {
-              payload: {
-                aps: {
-                  badge:42,
+              android: {
+                ttl: 3600 * 1000,
+                notification:{
+                  icon: 'stock_ticker_update',
+                  color: '#f45342'
                 },
               },
-            },
 
-            token : token
-          };
+              apns: {
+                payload: {
+                  aps: {
+                    badge:42,
+                    sound : "default",
+                    type:"ConnectionRequestAccepted",
+                  },
+                },
+              },
 
-          FCM.send(message, function(err,response){
-            if(err){
-              console.log("Error found", err);
-            }else{
-              console.log("response here", response);
-            }
-          })
+              token : token
+            };
+
+            FCM.send(message, function(err,response){
+              if(err){
+                console.log("Error found", err);
+              }else{
+                console.log("response here", response);
+              }
+            })
+          }
         }
 
         return responseHelper.post(res, matchStats, 'Status updated successfully');

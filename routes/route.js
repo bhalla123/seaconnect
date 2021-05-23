@@ -101,7 +101,10 @@ router.route('/api/store/token')
 router.route('/api/notification/list')
 	.get(passportJWT, notificationController.notificationList);
 
+router.route('/api/notification/reset/count')
+	.get(passportJWT, notificationController.resetNotificationCount);
 
-
+router.route('/api/notification/count')
+	.get(passportJWT, notificationController.notificationCount);
 
 module.exports = router;

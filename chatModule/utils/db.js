@@ -6,8 +6,8 @@ const  mongoose  = require("mongoose");
 class Db {
 	
 	constructor() {
-		//const  url  =  "mongodb://localhost:27017/seaconnect";
-		const  url  =  "";
+		const  url  =  "mongodb://localhost:27017/seaconnect";
+		//const  url  =  "";
 		const  connect  =  mongoose.connect(url, { useNewUrlParser: true  });
 	}
 	query(sql, args) {

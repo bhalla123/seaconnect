@@ -42,6 +42,7 @@ module.exports = {
                                   "question":item.question,
                                   "review":item.review,
                                   "review_type":"public",
+                                  "type":item.type,
                                   "connection_id": connectionId
                                 })
                             });
@@ -52,6 +53,7 @@ module.exports = {
                                   "authorized_id":req.user.id,
                                   "question":item.question,
                                   "review":item.review,
+                                  "type":item.type,
                                   "review_type":"private",
                                   "connection_id": connectionId
                                 })

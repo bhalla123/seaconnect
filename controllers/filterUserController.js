@@ -6,6 +6,7 @@ const JWT = require('jsonwebtoken');
 const responseHelper = require('../helpers/responseHelper');
 let bcrypt = require("bcryptjs");
 const fs = require('fs');
+var Connection = require("../models/connections");
 
 module.exports = {
 
@@ -65,11 +66,44 @@ module.exports = {
                 }
               }).select('id');
 
+      //already connected users
+      var senderId =  req.user.id;
+      let userDetail = await Connection.aggregate([
+            {
+                $match: {
+                    authorized_id: mongoose.Types.ObjectId(senderId),
+                    status: "accepted"
+                }
+            },
+            { "$project": {"connected_user_id": "$to_user_id", to_user_id: 1}}      
+          ]);
+
+          //get connection request
+          let userDetails = await Connection.aggregate([
+                {"$match": {
+                    to_user_id: mongoose.Types.ObjectId(senderId),
+                    status: "accepted"
+                }},
+                { "$project": {"connected_user_id": "$authorized_id", authorized_id:1}}     
+          ]);
+
+
+          let userid = {
+            "connected_user_id": senderId
+          }
+
+      var connectedUsers = userDetail.concat(userDetails).concat(userid);
+
+      var alreadyConnectedUsers = [];
+
+      await connectedUsers.map(item => {
+                        alreadyConnectedUsers.push(""+item.connected_user_id+"")
+                    });
 
       var nearUserIds = [];
-      var users = await userIds.map(item => {
-                        if(item._id != req.user.id){
-                          nearUserIds.push(item._id)
+      var users = await userIds.filter(function(el){
+                        if(alreadyConnectedUsers.indexOf( el.id ) < 0){
+                          nearUserIds.push(el._id)
                         }
                     });
 
@@ -81,8 +115,6 @@ module.exports = {
                         });
 
       await UserInteraction.insertMany(data);
-
-
 
       let playerInfo = await UserInteraction.aggregate([
          {

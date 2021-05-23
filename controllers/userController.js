@@ -8,6 +8,7 @@ const responseHelper = require('../helpers/responseHelper');
 let bcrypt = require("bcryptjs");
 const uid = require('uid');
 const fs = require('fs');
+var Review = require("../models/reviews");
 
 signtoken = user => {
   return JWT.sign({
@@ -118,7 +119,7 @@ module.exports = {
 
             //Get rating
             {
-               var loginUser = req.params.id;
+              var loginUser = req.params.id;
 
                 var rating = await Rating.aggregate([
                  {
@@ -149,10 +150,32 @@ module.exports = {
                     },
                   },     
               ]);
+
+              var reviews = await Review.aggregate([
+                 {
+                      $match: {
+                        to_user_id: mongoose.Types.ObjectId(loginUser),
+                        type:"other",
+                        review_type:"public"
+                      }
+                  },
+                  {
+                      $lookup: {
+                          localField: "authorized_id",
+                          foreignField: "_id",
+                          from: "users",
+                          as: "reviewdBy"
+                      }
+                  },
+                  { $unwind : '$reviewdBy' },    
+                  { "$project": {"_id": 1, "review":1, "review_type":1, "question":1,"authorized_id":1, "reviewdBy.first_name":1, "reviewdBy.user_name":1,  "reviewdBy.bio":1}},
+              ]);
+
             }
 
             var user_images = await UserImages.find({user_id: req.params.id});
-            var user = await User.findById({ _id: req.params.id }, { userImages: user_images, rating: rating}).select({ "first_name": 1,  "_id": 1, profile_image:1 , "user_name":1, "email":1, "interested_in":1, "gender":1, "latitude":1,"longitude":1, "looking_for":1, "age_range":1,"looking_for":1,"dob":1,"mobile_number":1,"bio":1});
+            var user = await User.findById({ _id: req.params.id }, { userImages: user_images, rating: rating, reviews:reviews})
+                          .select({ "first_name": 1,  "_id": 1, profile_image:1 , "user_name":1, "email":1, "interested_in":1, "gender":1, "latitude":1,"longitude":1, "looking_for":1, "age_range":1,"looking_for":1,"dob":1,"mobile_number":1,"bio":1});
 
             return responseHelper.post(res, user, 'Profile detail fetched Successfully');
             

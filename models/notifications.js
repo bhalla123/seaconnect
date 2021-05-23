@@ -9,6 +9,14 @@ var NotificationSchema = new Schema({
     message:{
     	type: String,
         deafult:null
+    }, 
+    title:{
+        type: String,
+        deafult:null
+    }, 
+    type:{
+        type: String,
+        deafult:null
     },
     authorized_id:{
         type: mongoose.Schema.Types.ObjectId,
