@@ -7,6 +7,7 @@ const responseHelper = require('../helpers/responseHelper');
 let bcrypt = require("bcryptjs");
 const fs = require('fs');
 var Connection = require("../models/connections");
+var Notification = require("../models/notifications");
 
 module.exports = {
 
@@ -14,6 +15,7 @@ module.exports = {
     try{
 
       var data = [];
+      loginId = req.user.id;
 
       if(req.body.latitude && req.body.longitude){
         var lat = req.body.latitude;
@@ -116,7 +118,7 @@ module.exports = {
 
       await UserInteraction.insertMany(data);
 
-      let playerInfo = await UserInteraction.aggregate([
+      let pInfo = await UserInteraction.aggregate([
          {
               $match: {
                   interaction_id: { $in: objectIdArray},
@@ -133,8 +135,15 @@ module.exports = {
         }  ,
         { $unwind : '$userDetail' }      
     ]);
+
+    var notificationCount = await Notification.countDocuments({
+                      to_user_id: mongoose.Types.ObjectId(loginId),is_read:false
+                    });
+
+    var playerInfo = pInfo.concat({"notificationCount":notificationCount});
       
-      return responseHelper.post(res, playerInfo, 'Interaction List');
+    
+    return responseHelper.post(res, playerInfo, 'Interaction List');
 
     }catch(err){
       console.log(err);

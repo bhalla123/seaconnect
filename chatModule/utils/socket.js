@@ -36,8 +36,11 @@ class Socket{
 
                 console.log(response);
                 
+                //this.io.broadcast.to(data.from_user_id).emit('addMessageResponse', response);
+                this.io.broadcast.to(response.to_user_id).emit('addMessageResponse', response);
+
                 //socket.to(response.toSocketId).emit('addMessageResponse', response);
-                this.io.emit('addMessageResponse', response);
+                //this.io.emit('addMessageResponse', response);
             });
         });
     }

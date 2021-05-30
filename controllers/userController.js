@@ -87,7 +87,7 @@ module.exports = {
           const data = req.body;
           // Match email
           const user = await User.findOne({
-              user_name: data.user_name,
+              email: data.email,
           });
 
 

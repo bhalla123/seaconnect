@@ -102,7 +102,7 @@ module.exports = {
 				//"notificationCount" : notificationList.length
 			}*/
 
-			if(notificationList.length < 0){
+			if(notificationList){
 	            return responseHelper.post(res, notificationList, "Notification list");
 	        }else{
 	            return responseHelper.successWithoutData(res, 'No record found');
@@ -133,8 +133,10 @@ module.exports = {
 	notificationCount: async(req, res) => {
 		try{
 			var loginId = req.user.id;
-			var notificationList = await Notification.countDocuments({"to_user_id": mongoose.Types.ObjectId(loginId), 
-											"is_read":false});
+			var notificationList = await Notification.countDocuments({
+											"to_user_id": mongoose.Types.ObjectId(loginId), 
+											"is_read":false
+										});
 
 			return responseHelper.successWithoutData(res, notificationList, 'Notification count');
 		}catch(err){
