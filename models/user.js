@@ -54,6 +54,10 @@ var UserSchema = new Schema({
         type: String,
         deafult: null
     },
+    user_type:{
+        type: Number,
+        deafult: 0
+    },
     longitude:{
         type: String,
         deafult: null

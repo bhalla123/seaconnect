@@ -132,14 +132,15 @@ module.exports = {
 
                   { 
                     $addFields: {
-                      convertedRating: { $toDecimal: "$review"}
+                      convertedRating: { $toDouble: "$review"}
                     },  
                   },
 
                   {
                     $group: {
                         _id: "$to_user_id",
-                        avgRating: { "$avg": { "$ifNull": ["$convertedRating", 0 ] } },
+                        avgRating: { "$avg": {$trunc: [ "$convertedRating", 1 ]} },
+                       // avgRating: { "$avg": { "$ifNull": ["$convertedRating", 0 ] } },
                         /*raters: {
                             $push: {
                               user_name: { $ifNull: ["$raterDetail.user_name", null] },
@@ -168,13 +169,31 @@ module.exports = {
                       }
                   },
                   { $unwind : '$reviewdBy' },    
-                  { "$project": {"_id": 1, "review":1, "avg_rating":1, "review_type":1, "question":1,"authorized_id":1, "reviewdBy.first_name":1, "reviewdBy.user_name":1,  "reviewdBy.bio":1}},
+                  { "$project": {"_id": 1, "review":1, "avg_rating":1,
+                        "review_type":1, "question":1,"authorized_id":1,
+                        "createdAt" :1,
+                        "reviewdBy.first_name":1, "reviewdBy.user_name":1, 
+                        "reviewdBy.bio":1,
+                        "reviewdBy.profile_image":1,
+                        "reviewdBy.profile_image_link":1
+
+                  }},
               ]);
 
             }
 
-            var user_images = await UserImages.find({user_id: req.params.id});
-            var user = await User.findById({ _id: req.params.id }, { userImages: user_images, rating: rating, reviews:reviews})
+
+            if(rating.length > 0){
+              var avgRate = [];
+              rating.map(item => {
+                        avgRate.push(item.avgRating)
+                        })
+
+            }else{
+              var avgRate = [];
+            }
+            var user_images = await UserImages.find({user_id: mongoose.Types.ObjectId(req.params.id)});
+            var user = await User.findById( req.params.id , { userImages: user_images, avgRating: avgRate, reviews:reviews})
                           .select({ "first_name": 1,  "_id": 1, profile_image:1 , "user_name":1, "email":1, "interested_in":1, "gender":1, "latitude":1,"longitude":1, "looking_for":1, "age_range":1,"looking_for":1,"dob":1,"mobile_number":1,"bio":1});
 
             return responseHelper.post(res, user, 'Profile detail fetched Successfully');

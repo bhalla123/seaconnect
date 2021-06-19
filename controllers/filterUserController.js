@@ -140,8 +140,7 @@ module.exports = {
                       to_user_id: mongoose.Types.ObjectId(loginId),is_read:false
                     });
 
-    var playerInfo = pInfo.concat({"notificationCount":notificationCount});
-      
+    var playerInfo = ({"interactionData" : pInfo, "notificationCount":notificationCount});
     
     return responseHelper.post(res, playerInfo, 'Interaction List');
 
