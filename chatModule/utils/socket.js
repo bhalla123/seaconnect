@@ -18,6 +18,7 @@ class Socket{
             * get the get messages
             */
             socket.on('getMessages', async (data) => { 
+                console.log(data);
                 const result = await helper.getMessages(data.connectionId);
 				if (result === null) {
                     this.io.emit('getMessagesResponse', {result:[], connectionId:data.connectionId});
@@ -37,7 +38,7 @@ class Socket{
                 console.log(response);
                 
                 //this.io.broadcast.to(data.from_user_id).emit('addMessageResponse', response);
-                this.io.broadcast.to(response.to_user_id).emit('addMessageResponse', response);
+                this.io.emit('addMessageResponse', response);
 
                 //socket.to(response.toSocketId).emit('addMessageResponse', response);
                 //this.io.emit('addMessageResponse', response);

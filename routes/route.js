@@ -110,4 +110,7 @@ router.route('/api/notification/count')
 router.route('/api/reset/chat/count')
 	.post(passportJWT, notificationController.resetChatCount);
 
+router.route('/api/reset/del/image')
+	.post(passportJWT, userController.delImage);
+
 module.exports = router;

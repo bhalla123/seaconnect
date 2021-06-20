@@ -169,8 +169,7 @@ module.exports = {
                       }
                   },
                   { $unwind : '$reviewdBy' },    
-                  { "$project": {"_id": 1, "review":1, "avg_rating":1,
-                        "review_type":1, "question":1,"authorized_id":1,
+                  { "$project": {"_id": 1, "display_review":1, "display_rating":1, "question":1,
                         "createdAt" :1,
                         "reviewdBy.first_name":1, "reviewdBy.user_name":1, 
                         "reviewdBy.bio":1,
@@ -186,7 +185,7 @@ module.exports = {
             if(rating.length > 0){
               var avgRate = [];
               rating.map(item => {
-                        avgRate.push(item.avgRating)
+                        avgRate.push(parseFloat(item.avgRating).toFixed(1))
                         })
 
             }else{
@@ -194,7 +193,7 @@ module.exports = {
             }
             var user_images = await UserImages.find({user_id: mongoose.Types.ObjectId(req.params.id)});
             var user = await User.findById( req.params.id , { userImages: user_images, avgRating: avgRate, reviews:reviews})
-                          .select({ "first_name": 1,  "_id": 1, profile_image:1 , "user_name":1, "email":1, "interested_in":1, "gender":1, "latitude":1,"longitude":1, "looking_for":1, "age_range":1,"looking_for":1,"dob":1,"mobile_number":1,"bio":1});
+                          .select({ "first_name": 1,  "_id": 1, "avg_rating":1, profile_image:1 , "user_name":1, "email":1, "interested_in":1, "gender":1, "latitude":1,"longitude":1, "looking_for":1, "age_range":1,"looking_for":1,"dob":1,"mobile_number":1,"bio":1});
 
             return responseHelper.post(res, user, 'Profile detail fetched Successfully');
             
@@ -308,9 +307,7 @@ module.exports = {
   },
 
   uploadUserImages: async(req, res) => {
-
     var files = req.files;
-              console.log(files);
 
     var data = [];
 
@@ -323,6 +320,16 @@ module.exports = {
       var resp = await UserImages.insertMany(data);
 
     return responseHelper.get(res, resp,  'User images fetch successfully.');
+  },
+
+  delImage: async(req, res) => {
+
+    var id = req.body.imageId;
+    console.log(id);
+
+    var resp = await UserImages.findByIdAndRemove(id);
+
+    return responseHelper.get(res, {},  'Image deleted successfully!!.');
   },
 
   logoutUser: async(req, res) => {

@@ -74,7 +74,7 @@ module.exports = {
             {
                 $match: {
                     authorized_id: mongoose.Types.ObjectId(senderId),
-                    status: "accepted"
+                    status: {$in: ["accepted", "block"]}
                 }
             },
             { "$project": {"connected_user_id": "$to_user_id", to_user_id: 1}}      
@@ -84,7 +84,7 @@ module.exports = {
           let userDetails = await Connection.aggregate([
                 {"$match": {
                     to_user_id: mongoose.Types.ObjectId(senderId),
-                    status: "accepted"
+                    status: {$in: ["accepted", "block"]}
                 }},
                 { "$project": {"connected_user_id": "$authorized_id", authorized_id:1}}     
           ]);
@@ -133,7 +133,8 @@ module.exports = {
                 as: "userDetail"
             }
         }  ,
-        { $unwind : '$userDetail' }      
+        { $unwind : '$userDetail' },
+          
     ]);
 
     var notificationCount = await Notification.countDocuments({

@@ -32,6 +32,8 @@ module.exports = {
           var publicRating = 0;
           var toUserId = req.body.to_user_id;
           var connectionId = req.body.connection_id;
+          var displayRating = req.body.display_rating;
+          var displayReview = req.body.display_review;
 
           var publicBodyData = req.body.public;
           var privateBodyData = req.body.private;
@@ -53,10 +55,11 @@ module.exports = {
                                   "review_type":"public",
                                   "type":item.type,
                                   "connection_id": connectionId,
-                                  "avg_rating": avgRating
+                                  "avg_rating": avgRating,
+                                  "display_rating": displayRating,
+                                  "display_review": displayReview
                                 })
                             });
-
 
           var privateReview = await privateBodyData.map(item => {
                             privateData.push({
@@ -73,6 +76,51 @@ module.exports = {
 
          await Review.insertMany(publicData);
          await Review.insertMany(privateData);
+
+
+          // insert user rating
+          {
+            //get avg rating
+            var rating = await Review.aggregate([
+                 {
+                      $match: {
+                        to_user_id: mongoose.Types.ObjectId(toUserId),
+                        review_type:"public",
+                        type: "rating"
+                      }
+                  },
+
+                  { 
+                    $addFields: {
+                      convertedRating: { $toDouble: "$review"}
+                    },  
+                  },
+
+                  {
+                    $group: {
+                        _id: "$to_user_id",
+                        avgRating: { "$avg": {$trunc: [ "$convertedRating", 1 ]} }
+                    }
+                  } 
+              ]);
+
+            if(rating.length > 0){
+              var avgRate = 0;
+              rating.map(item => {
+                        avgRate = item.avgRating
+                        })
+
+            }else{
+              var avgRate = 0;
+            }
+
+
+            var a = await User.findOneAndUpdate({
+                  _id: toUserId,
+                }, {
+                  avg_rating: parseFloat(avgRate).toFixed(1)
+                }).lean();
+          }
 
          var reviwebyData =  {
             "connection_id": connectionId,

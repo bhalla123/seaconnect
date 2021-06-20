@@ -19,6 +19,8 @@ class Helper{
 
 	async insertMessages(params){
 		try {
+
+			console.log(params);
 			let  chatMessage  =  new Chat({ message: params.message, from_user_id: params.from_user_id, to_user_id: params.to_user_id, date: params.date, time:params.time, connection_id:params.connection_id});
     		chatMessage.save();
 
@@ -32,7 +34,9 @@ class Helper{
 	                user_id: mongoose.Types.ObjectId(params.to_user_id),
 	            });
 
-		        if(token){
+
+console.log(pushToken);
+		        if(pushToken){
 		            var token = pushToken.token;
 
 		            var message = {

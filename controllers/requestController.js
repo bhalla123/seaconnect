@@ -19,8 +19,9 @@ module.exports = {
   sendRequest: async(req, res) => {
     try{
           var loginUser = req.user.id;
+          var toUser = req.body.to_user_id;
 
-          var userName = await User.findOne({"_id":loginUser}, {user_name:1}).lean();
+          var userName = await User.findOne({"_id":loginUser}, {user_name:1, profile_image:1}).lean();
          
           data =  {
             "authorized_id": req.user.id,
@@ -28,7 +29,21 @@ module.exports = {
             "status":"open"
           }
 
+          var firstConn = await Connection.findOne({"to_user_id": toUser, "authorized_id": loginUser }).lean();
+          var secondConn = await Connection.findOne({"authorized_id": req.body.to_user_id, "to_user_id": toUser}).lean();
+
+          if(firstConn != null){
+            return responseHelper.onError(res, {}, "User already connected");
+          }
+          
+          if(secondConn != null){
+            return responseHelper.onError(res, {}, "User already connected");
+          }
+
+
           var con = await Connection.create(data);
+
+          var imagePath = "http://45.90.108.137:3000/profile/"+userName.profile_image;
 
         //Notification
         {
@@ -37,7 +52,8 @@ module.exports = {
             "authorized_id":req.user.id,
             "type":"ConnectionRequestSent",
             "title":"Connection Request Sent",
-            "message": userName.user_name + " sent you connection request"
+            "message": userName.user_name + " sent you connection request",
+            "imageUrl":imagePath
           }
 
           await Notification.create(notification_data);
@@ -53,6 +69,7 @@ module.exports = {
               notification :{
                 title: "Connection Request Sent",
                 body: username.user_name + " send you connection request",
+                imageUrl: imagePath
               },
 
               android: {
@@ -104,14 +121,16 @@ module.exports = {
         if(req.body.status == "accepted"){
           loginUser = req.user.id;
 
-          userName = await User.findOne({"_id": loginUser}, {user_name:1}).lean();
-          
+          userName = await User.findOne({"_id": loginUser}, {user_name:1, profile_image:1}).lean();
+          var imagePath = "http://45.90.108.137:3000/profile/"+userName.profile_image;
+
           data =  {
             "to_user_id":matchStats.authorized_id,
             "authorized_id":req.user.id,
             "type":"ConnectionRequestAccepted",
             "title":"Connection Request Accepted",
-            "message": userName.user_name + " accepted yor connection request"
+            "message": userName.user_name + " accepted yor connection request",
+            "image":imagePath
           }
 
           await Notification.create(data);
@@ -127,6 +146,7 @@ module.exports = {
               notification :{
                 title : "Connection Request Accepted",
                 body: userName.user_name + " accepted yor connection request",
+                imageUrl: imagePath
               },
 
               android: {
@@ -226,7 +246,25 @@ module.exports = {
                     as: "userDetail"
                 }
             },
-            { $unwind : '$userDetail' }      
+            { $unwind : '$userDetail' },
+            {
+                  $lookup :{
+                    from:'chats',
+                  
+                    "let": {local_id:"$_id"},
+                    "pipeline":[
+                      {"$match":{"$expr":{"$eq":["$$local_id","$connection_id"]}}},
+                      {"$sort":{"chat_id": -1}},
+                      {"$limit":1}
+                    ],                      
+                    as:"chat",
+                  }
+                    
+              },  
+            {   $unwind:{
+      path: "$chat",
+      preserveNullAndEmptyArrays: true
+    } },      
           ]);
 
           //get connection request
@@ -245,7 +283,26 @@ module.exports = {
                     as: "userDetail"
                 }
             },
-            { $unwind : '$userDetail' }      
+            { $unwind : '$userDetail' }, 
+             {
+                  $lookup :{
+                    from:'chats',
+                  
+                    "let": {local_id:"$_id"},
+                    "pipeline":[
+                      {"$match":{"$expr":{"$eq":["$$local_id","$connection_id"]}}},
+                      {"$sort":{"chat_id": -1}},
+                      {"$limit":1}
+                    ],                      
+                    as:"chat",
+                  }
+                    
+              },
+
+                          {   $unwind:{
+      path: "$chat",
+      preserveNullAndEmptyArrays: true
+    } },       
           ]);
 
           var af =  userDetail.concat(userDetails);

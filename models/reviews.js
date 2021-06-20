@@ -22,6 +22,14 @@ var ReviewSchema = new Schema({
         type: String,
         default:null
     },
+    display_review:{
+        type: String,
+        default:null
+    },
+    display_rating:{
+        type: String,
+        default:null
+    },
     authorized_id:{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
@@ -33,7 +41,8 @@ var ReviewSchema = new Schema({
     connection_id:{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Connection'
-    }
+    },
+
 },{
     timestamps: true
 });

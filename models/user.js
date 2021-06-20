@@ -58,6 +58,10 @@ var UserSchema = new Schema({
         type: Number,
         deafult: 0
     },
+    avg_rating:{
+        type: Number,
+        deafult: 0
+    },
     longitude:{
         type: String,
         deafult: null

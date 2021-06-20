@@ -26,6 +26,10 @@ var NotificationSchema = new Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
     },
+    imageUrl:{
+        type: String,
+        default: null
+    },
 },{
     timestamps: true
 });
