@@ -62,44 +62,73 @@ module.exports = {
                 user_id: mongoose.Types.ObjectId(req.body.to_user_id),
             });
 
-          if(token){
+          if(pushToken){
             var token = pushToken.token;
 
-            var message = {
-              notification :{
-                title: "Connection Request Sent",
-                body: username.user_name + " send you connection request",
-                imageUrl: imagePath
-              },
-
-              android: {
-                ttl: 3600 * 1000,
-                notification:{
-                  icon: 'stock_ticker_update',
-                  color: '#f45342',
+            if(pushToken.platform == "android"){
+              var message = {
+                token: token,
+                notification: {
                 },
-              },
-
-              apns: {
-                payload: {
-                  aps: {
-                    badge:42,
-                    sound : "default",
-                    type:"ConnectionRequestSent"
-                  },
+                data: {
+                    showForegroundNotification: 'false',
+                    type: 'ConnectionRequestSent',
+                    title: "Connection Request Sent",
+                    body: userName.user_name + " send you connection request",
+                    image: imagePath
                 },
-              },
-
-              token : token
+                android: {
+                    notification: {
+                        clickAction: 'ANDROID_NOTIFICATION_CLICK',
+                    },
+                }
             };
 
             FCM.send(message, function(err,response){
-              if(err){
-                console.log("Error found", err);
-              }else{
-                console.log("response here", response);
-              }
-            })
+                    if(err){
+                      console.log("Error found", err);
+                    }else{
+                      console.log("response here", response);
+                    }
+                  })
+
+          }else{
+                var message = {
+                    notification :{
+                      title: "Connection Request Sent",
+                      body: userName.user_name + " send you connection request",
+                      image: imagePath
+                    },
+
+                  android: {
+                    ttl: 3600 * 1000,
+                    notification:{
+                      icon: 'stock_ticker_update',
+                      color: '#f45342',
+                    },
+                  },
+
+                  apns: {
+                    payload: {
+                      aps: {
+                        badge:42,
+                        sound : "default",
+                        type:"ConnectionRequestSent"
+                      },
+                    },
+                  },
+
+                  token : token
+                };
+
+              FCM.send(message, function(err,response){
+                if(err){
+                  console.log("Error found", err);
+                }else{
+                  console.log("response here", response);
+                }
+              })
+            }
           }          
         }
 
@@ -139,48 +168,80 @@ module.exports = {
                 user_id: mongoose.Types.ObjectId(matchStats.authorized_id),
             });
 
-          if(token){
+          if(pushToken){
             var token = pushToken.token;
 
-            var message = {
-              notification :{
-                title : "Connection Request Accepted",
-                body: userName.user_name + " accepted yor connection request",
-                imageUrl: imagePath
-              },
-
-              android: {
-                ttl: 3600 * 1000,
-                notification:{
-                  icon: 'stock_ticker_update',
-                  color: '#f45342'
+            if(pushToken.platform == "android"){
+              var message = {
+                token: token,
+                notification: {
                 },
-              },
-
-              apns: {
-                payload: {
-                  aps: {
-                    badge:42,
-                    sound : "default",
+                data: {
+                    showForegroundNotification: 'false',
+                    type: 'ConnectionRequestAccepted',
+                    image: imagePath,
+                    title : "Connection Request Accepted",
+                    body: userName.user_name + " accepted yor connection request",
                     type:"ConnectionRequestAccepted",
-                  },
                 },
-              },
-
-              token : token
+                android: {
+                    notification: {
+                        clickAction: 'ANDROID_NOTIFICATION_CLICK',
+                    },
+                }
             };
 
             FCM.send(message, function(err,response){
-              if(err){
-                console.log("Error found", err);
-              }else{
-                console.log("response here", response);
-              }
-            })
+                    if(err){
+                      console.log("Error found", err);
+                    }else{
+                      console.log("response here", response);
+                    }
+                  })
+
+          }else{
+              var message = {
+                notification :{
+                  title : "Connection Request Accepted",
+                  body: userName.user_name + " accepted yor connection request",
+                  image: imagePath
+                },
+
+                android: {
+                  ttl: 3600 * 1000,
+                  notification:{
+                    icon: 'stock_ticker_update',
+                    color: '#f45342'
+                  },
+                },
+
+                apns: {
+                  payload: {
+                    aps: {
+                      badge:42,
+                      sound : "default",
+                      type:"ConnectionRequestAccepted",
+                    },
+                  },
+                },
+
+                token : token
+              };
+
+              FCM.send(message, function(err,response){
+                if(err){
+                  console.log("Error found", err);
+                }else{
+                  console.log("response here", response);
+                }
+              })
           }
+
         }
 
-        return responseHelper.post(res, matchStats, 'Status updated successfully');
+      }
+
+      return responseHelper.post(res, matchStats, 'Status updated successfully');
     }catch(err){
       console.log(err);
       return responseHelper.onError(res, err, 'Error updating status');
@@ -262,9 +323,9 @@ module.exports = {
                     
               },  
             {   $unwind:{
-      path: "$chat",
-      preserveNullAndEmptyArrays: true
-    } },      
+                path: "$chat",
+                preserveNullAndEmptyArrays: true
+              } },      
           ]);
 
           //get connection request
@@ -299,10 +360,10 @@ module.exports = {
                     
               },
 
-                          {   $unwind:{
-      path: "$chat",
-      preserveNullAndEmptyArrays: true
-    } },       
+            {   $unwind:{
+              path: "$chat",
+              preserveNullAndEmptyArrays: true
+            } },       
           ]);
 
           var af =  userDetail.concat(userDetails);

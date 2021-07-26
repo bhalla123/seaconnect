@@ -21,12 +21,12 @@ class Helper{
 		try {
 
 			console.log(params);
-			let  chatMessage  =  new Chat({ message: params.message, from_user_id: params.from_user_id, to_user_id: params.to_user_id, date: params.date, time:params.time, connection_id:params.connection_id});
+			let  chatMessage  =  new Chat({ message: params.message, from_user_id: params.from_user_id, to_user_id: params.to_user_id, date: params.date, time:params.time, connection_id:params.connection_id, is_read:false});
     		chatMessage.save();
 
     		//Notifications
     		{
-    			var msgTo = params.to_user_id;
+    			var msgTo = params.from_user_id;
 
           		var userName = await User.findOne({"_id":msgTo}, {user_name:1}).lean();
 
@@ -35,44 +35,75 @@ class Helper{
 	            });
 
 
-console.log(pushToken);
 		        if(pushToken){
-		            var token = pushToken.token;
+		        	var token = pushToken.token;
 
-		            var message = {
-		              notification :{
-		                title:username.user_name + " send you message",
-		                body:params.message,
-		              },
+		        	if(pushToken.platform == "android"){
+		        		var message = {
+						    token: token,
+						    notification: {
+						  
+						    },
+						    data: {
+						        showForegroundNotification: 'false',
+						        type: 'chat',
+						        title:userName.user_name + " send you message",
+			                	body:params.message,
+						    },
+						    android: {
+						        notification: {
+						            clickAction: 'ANDROID_NOTIFICATION_CLICK',
+						        },
+						    }
+						};
+console.log(message);
+						FCM.send(message, function(err,response){
+			              if(err){
+			                console.log("Error found", err);
+			              }else{
+			                console.log("response here", response);
+			              }
+			            })
 
-		              android: {
-		                ttl: 3600 * 1000,
-		                notification:{
-		                  icon: 'stock_ticker_update',
-		                  color: '#f45342',
-		                },
-		              },
+		        	}else{
+			            var token = pushToken.token;
 
-		              apns: {
-		                payload: {
-		                  aps: {
-		                    badge:42,
-		                    sound : "default",
-		                    type:"ChatMessage"
-		                  },
-		                },
-		              },
+			            var message = {
+			              notification :{
+			                title:userName.user_name + " send you message",
+			                body:params.message,
+			              },
 
-		              token : token
-		            };
+			              android: {
+			                ttl: 3600 * 1000,
+			                notification:{
+			                  icon: 'stock_ticker_update',
+			                  color: '#f45342',
+			                },
+			              },
 
-		            FCM.send(message, function(err,response){
-		              if(err){
-		                console.log("Error found", err);
-		              }else{
-		                console.log("response here", response);
-		              }
-		            })
+			              apns: {
+			                payload: {
+			                  aps: {
+			                    badge:42,
+			                    sound : "default",
+			                    type:"ChatMessage"
+			                  },
+			                },
+			              },
+
+			              token : token
+			            };
+
+			            FCM.send(message, function(err,response){
+			              if(err){
+			                console.log("Error found", err);
+			              }else{
+			                console.log("response here", response);
+			              }
+			            })
+
+		        	}
 		          } 
 	    	}
 
@@ -88,6 +119,10 @@ console.log(pushToken);
 		try {
 			var chatMsgList = await Chat.find({"connection_id": mongoose.Types.ObjectId(connectionId)})
 										.sort({'chat_id': -1});
+
+			await Chat.update({"connection_id": mongoose.Types.ObjectId(connectionId) },
+								{is_read: true},{multi: true});
+							
 
 			console.log("list", chatMsgList);
 			return chatMsgList;
